@@ -78,106 +78,14 @@ cv::Mat ImageProcessing::erode( const cv::Mat& source ) {
     }
 
 cv::Mat ImageProcessing::hernandezCorvoLeft( const cv::Mat& source ) {
-    int initialYIntercept, perpP2Intercept, perpPP2Intercept, p1Intercept, p4Intercept, p5Intercept,
-        distXMFToP1, distYMFToP1;
-    double initialSlope, perpSlope;
     cv::Mat marked;
-    cv::Point p1( MARGIN + 1, 0 ),
-              pP1( source.cols, 0 ),
-              p2( 0, MARGIN ),
-              pP2(0, source.rows - MARGIN),
-              p4, p5,
-              crossPInitialPerpP2;
-
-    // Encontrar Punto 2 y Punto 2'
-    /*
-     * Lo que hace esta parte es aprovechar el margen que hay de "sobra" en la foto del pie para encontrar los puntos 2 y 2'.
-     * Este margen nos permite conocer la posición en Y de antemano de ambos puntos, puesto que no hay variabilidad sobre esto, porque
-     * los puntos anterior y posteriores ya se encontraron al hacer la separación.
-     */
-    for ( int x = 0; x < source.cols; ++x ) {
-        if ( !p2.x and source.at<cv::Vec3b>( cv::Point( x, p2.y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
-            p2.x = x;
-            }
-        if ( !pP2.x and source.at<cv::Vec3b>( cv::Point( x, pP2.y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
-            pP2.x = x;
-            }
-        if ( p2.x and pP2.x ) {
-            break;
-            }
-        }
-
-    // Encontrar Punto 1
-    /*
-     * La misma lógica es utilizada para encontrar el Punto 1, excepto que la variable sería el eje Y.
-     */
-    for ( int y = 0; y < source.rows; ++y ) {
-        if ( source.at<cv::Vec3b>( cv::Point( p1.x, y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
-            p1.y = y;
-            break;
-            }
-        }
-
-    // Encontrar Punto 1'
-    /*
-     *
-     */
-    int footLength = pP2.y - p2.y;
-    for ( int y = footLength / 2; y < source.rows; ++y ) {
-        for ( int x = 0; x < source.cols; ++x ) {
-            if ( source.at<cv::Vec3b>( cv::Point( x, y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
-                if ( x < pP1.x ) {
-                    pP1.x = x;
-                    pP1.y = y;
-                    }
-                break;
-                }
-            }
-        }
     marked = source.clone();
 
-    // Calcular la pendiente entre Punto 1 y Punto 1'
-    initialSlope = (double)((pP1.y - p1.y)/(pP1.x - p1.x));
-    initialYIntercept = p1.y - initialSlope * p1.x;
-    perpSlope = (double)( -1 / initialSlope );
-    perpP2Intercept = p2.y - perpSlope * p2.x;
-    perpPP2Intercept = pP2.y - perpSlope * pP2.x;
-    crossPInitialPerpP2.x = (initialYIntercept - perpP2Intercept) /
-                            (perpSlope - initialSlope);
-    crossPInitialPerpP2.y = perpSlope * crossPInitialPerpP2.x + perpP2Intercept;
-    /*p1Intercept = p1.y - perpSlope * p1.x;
-    distXMFToP1 = p1.x - crossPInitialPerpP2.x;
-    distYMFToP1 = p1.y - crossPInitialPerpP2.y;
-    p4 = cv::Point( p1.x + distXMFToP1, p1.y + distYMFToP1 );
-    p4Intercept = p4.y - perpSlope * p4.x;
-    p5 = cv::Point( p1.x + 2 * distXMFToP1, p1.y + 2 * distYMFToP1 );
-    p5Intercept = p5.y - perpSlope * p5.x;
+    cv::Point pt1, pt1P, pt2, pt2P, ptExt, interMF, ptExt4, ptExt5, ptInt4, ptInt5, ptInt9,
+                interX1, interX2, interY1, interY2, interAY, interTA;
 
-    cv::circle( marked, p1, 2, cv::Scalar(0, 0, 255) );
-    cv::circle( marked, pP1, 2, cv::Scalar(0, 0, 255) );
-    cv::circle( marked, p2, 2, cv::Scalar(0, 0, 255) );
-    cv::circle( marked, pP2, 2, cv::Scalar(0, 0, 255) );
-    cv::circle( marked, crossPInitialPerpP2, 2, cv::Scalar(0, 0, 255) );
+    Line *primeLine, *perPrimePt2, *perPrimePt2P, *l3, *l4, *l5, *l6, *l7, *l8, *l9;
 
-    cv::line( marked, cv::Point( (0 - initialYIntercept)/initialSlope, 0 ),
-                      cv::Point( (source.rows - 1 - initialYIntercept)/initialSlope, source.rows - 1 ),
-                      cv::Scalar( 200, 200, 100));
-    cv::line( marked, cv::Point( 0, 0 * perpSlope + perpP2Intercept ),
-                      cv::Point( source.cols - 1, source.cols * perpSlope + perpP2Intercept ),
-                      cv::Scalar( 200, 200, 100));
-    cv::line( marked, cv::Point( 0, 0 * perpSlope + perpPP2Intercept ),
-                      cv::Point( source.cols - 1, source.cols * perpSlope + perpPP2Intercept ),
-                      cv::Scalar( 200, 200, 100));
-    cv::line( marked, cv::Point( 0, 0 * perpSlope + p1Intercept ),
-                      cv::Point( source.cols - 1, source.cols * perpSlope + p1Intercept ),
-                      cv::Scalar( 200, 200, 100));
-    cv::line( marked, cv::Point( 0, 0 * perpSlope + p4Intercept ),
-                      cv::Point( source.cols - 1, source.cols * perpSlope + p4Intercept ),
-                      cv::Scalar( 200, 200, 100));
-    cv::line( marked, cv::Point( 0, 0 * perpSlope + p5Intercept ),
-                      cv::Point( source.cols - 1, source.cols * perpSlope + p5Intercept ),
-                      cv::Scalar( 200, 200, 100));
-    */
     return marked;
     }
 

@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <functional>
 
+#include "line.h"
+
 class ImageProcessing {
     private:
         static const int NUMBER_OF_COLORS = 14;     // Número de colores en la escala
