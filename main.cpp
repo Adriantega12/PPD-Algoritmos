@@ -8,7 +8,7 @@
 #include "imageprocessing.h"
 
 int main(int argc, char *argv[]) {
-    cv::Mat source, binary, erode, separateFeet, rightFoot, leftFoot;
+    cv::Mat source, binary, erode, separateFeet, rightFoot, leftFoot, markedLeft;
 
     // Inicializar IP
     ImageProcessing::initializeImageProcessing();
@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
     if (ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot )) {
         std::cout << "Se pudo separar los pies efectivamente" << std::endl;
         }
+    markedLeft = ImageProcessing::hernandezCorvoLeft( leftFoot );
 
     // Guardar imágenes
     cv::imwrite( "binary.jpg", binary );
@@ -32,6 +33,7 @@ int main(int argc, char *argv[]) {
     cv::imwrite( "separateFeet.jpg", separateFeet );
     cv::imwrite( "right.jpg", rightFoot );
     cv::imwrite( "left.jpg", leftFoot );
+    cv::imwrite( "left_hc.jpg", markedLeft );
 
     return 0;
     }

@@ -14,8 +14,9 @@
 
 class ImageProcessing {
     private:
-        static const int NUMBER_OF_COLORS = 14;
-        static cv::Vec3b SCALE[NUMBER_OF_COLORS];
+        static const int NUMBER_OF_COLORS = 14;     // Número de colores en la escala
+        static cv::Vec3b SCALE[NUMBER_OF_COLORS];   // Vector de escala de colores
+        static const int MARGIN = 2;              // Pixeles de sobra
 
     public:
         ImageProcessing();
@@ -30,6 +31,9 @@ class ImageProcessing {
 
         // Colors
 
+
+        // Processing
+        static cv::Mat hernandezCorvoLeft( const cv::Mat& );
 
         // Feet detection
         static bool separateFeet( const cv::Mat&, cv::Mat&, cv::Mat& );
