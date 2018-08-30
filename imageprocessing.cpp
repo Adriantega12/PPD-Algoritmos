@@ -78,8 +78,24 @@ cv::Mat ImageProcessing::erode( const cv::Mat& source ) {
     }
 
 // Colors
-std::vector<cv::Mat> ImageProcessing::scaleColors( const cv::Mat& ) {
+std::vector<cv::Mat> ImageProcessing::scaleColors( const cv::Mat& source ) {
+    cv::Mat tempContainer;
+    std::vector<cv::Mat> colorVectors;
 
+    tempContainer = source.clone();
+    for ( int colorIndex = 0; colorIndex < NUMBER_OF_COLORS; ++colorIndex ) {
+        tempContainer = tempContainer.clone();
+        for ( int y = 0; y < source.rows; ++y ) {
+            for ( int x = 0; x < source.cols; ++x ) {
+                if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == SCALE[colorIndex] ) {
+                    tempContainer.at<cv::Vec3b>( cv::Point(x, y) ) = cv::Vec3b(255, 255, 255);
+                    }
+                }
+            }
+        colorVectors.push_back( tempContainer );
+        }
+
+    return colorVectors;
     }
 
 cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
@@ -116,7 +132,10 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     /*
      * La misma lógica es utilizada para encontrar el Punto 1, excepto que la variable sería el eje Y.
      */
-    for ( int y = isLeft * 0 + !isLeft * (source.cols - 1);
+    // p2.getY() + ( distY / 5 )
+
+    int footLength = pt2P.y - pt2.y;
+    for ( int y = !isLeft * (source.cols - 1);
           isLeft * (y < source.rows) + !isLeft * (y >= 0);
           y += isLeft - !isLeft ) {
         if ( source.at<cv::Vec3b>( cv::Point( pt1.x, y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
@@ -129,7 +148,6 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     /*
      *
      */
-    int footLength = pt2P.y - pt2.y;
     for ( int y = footLength / 2; y < source.rows; ++y ) {
         for ( int x = !isLeft * (source.cols - 1);
               isLeft * (x < source.cols) + !isLeft * (x >= 0);
