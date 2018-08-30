@@ -11,6 +11,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <cmath>
 
 #include "line.h"
 
@@ -18,7 +19,7 @@ class ImageProcessing {
     private:
         static const int NUMBER_OF_COLORS = 14;     // Número de colores en la escala
         static cv::Vec3b SCALE[NUMBER_OF_COLORS];   // Vector de escala de colores
-        static const int MARGIN = 2;              // Pixeles de sobra
+        static const int MARGIN = 5;              // Pixeles de sobra
 
     public:
         ImageProcessing();
@@ -32,10 +33,10 @@ class ImageProcessing {
         static cv::Mat erode( const cv::Mat& );
 
         // Colors
-
+        std::vector<cv::Mat> scaleColors( const cv::Mat& );
 
         // Processing
-        static cv::Mat hernandezCorvoLeft( const cv::Mat& );
+        static cv::Mat hernandezCorvo( const cv::Mat&, bool );
 
         // Feet detection
         static bool separateFeet( const cv::Mat&, cv::Mat&, cv::Mat& );

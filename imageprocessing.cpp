@@ -77,14 +77,204 @@ cv::Mat ImageProcessing::erode( const cv::Mat& source ) {
     return dest;
     }
 
-cv::Mat ImageProcessing::hernandezCorvoLeft( const cv::Mat& source ) {
+// Colors
+std::vector<cv::Mat> ImageProcessing::scaleColors( const cv::Mat& ) {
+
+    }
+
+cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     cv::Mat marked;
     marked = source.clone();
 
-    cv::Point pt1, pt1P, pt2, pt2P, ptExt, interMF, ptExt4, ptExt5, ptInt4, ptInt5, ptInt9,
-                interX1, interX2, interY1, interY2, interAY, interTA;
-
+    cv::Point pt1( (isLeft ? MARGIN + 1 : source.cols - MARGIN - 1), 0 ),
+              pt1P( (isLeft ? source.cols : 0), 0 ),
+              pt2( 0, MARGIN ),
+              pt2P(0, source.rows - MARGIN),
+              ptExt, interMF, ptExt4, ptExt5, ptInt4, ptInt5, ptInt9,
+              interX1, interX2, interY1, interY2, interAY, interTA;
     Line *primeLine, *perPrimePt2, *perPrimePt2P, *l3, *l4, *l5, *l6, *l7, *l8, *l9;
+
+    // Encontrar Punto 2 y Punto 2'
+    /*
+     * Lo que hace esta parte es aprovechar el margen que hay de "sobra" en la foto del pie para encontrar los puntos 2 y 2'.
+     * Este margen nos permite conocer la posición en Y de antemano de ambos puntos, puesto que no hay variabilidad sobre esto, porque
+     * los puntos anterior y posteriores ya se encontraron al hacer la separación.
+     */
+    for ( int x = 0; x < source.cols; ++x ) {
+        if ( !pt2.x and source.at<cv::Vec3b>( cv::Point( x, pt2.y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
+            pt2.x = x;
+            }
+        if ( !pt2P.x and source.at<cv::Vec3b>( cv::Point( x, pt2P.y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
+            pt2P.x = x;
+            }
+        if ( pt2.x and pt2P.x ) {
+            break;
+            }
+        }
+
+    // Encontrar Punto 1
+    /*
+     * La misma lógica es utilizada para encontrar el Punto 1, excepto que la variable sería el eje Y.
+     */
+    for ( int y = isLeft * 0 + !isLeft * (source.cols - 1);
+          isLeft * (y < source.rows) + !isLeft * (y >= 0);
+          y += isLeft - !isLeft ) {
+        if ( source.at<cv::Vec3b>( cv::Point( pt1.x, y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
+            pt1.y = y;
+            break;
+            }
+        }
+
+    // Encontrar Punto 1'
+    /*
+     *
+     */
+    int footLength = pt2P.y - pt2.y;
+    for ( int y = footLength / 2; y < source.rows; ++y ) {
+        for ( int x = !isLeft * (source.cols - 1);
+              isLeft * (x < source.cols) + !isLeft * (x >= 0);
+              x += isLeft - !isLeft ) {
+            if ( source.at<cv::Vec3b>( cv::Point( x, y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
+                if ( isLeft * (x < pt1P.x) + !isLeft * ( x > pt1P.x ) ) {
+                    pt1P.x = x;
+                    pt1P.y = y;
+                    }
+                break;
+                }
+            }
+        }
+
+    // Línea principal
+    primeLine = new Line(pt1.x, pt1.y, pt1P.x, pt1P.y);
+    // Segunda línea que pasa por punto 2, perpendicular a la primer línea
+    perPrimePt2 = new Line((*primeLine), pt2.x, pt2.y);
+    // Tercer línea que pasa por punto 2', perpendicular a la primer línea
+    perPrimePt2P = new Line((*primeLine), pt2P.x, pt2P.y);
+
+    // Punto de intersección de la línea principal y pt2
+    interMF.x = perPrimePt2->getIntersectPoint( (*primeLine) );
+    interMF.y = perPrimePt2->getY( interMF.x );
+
+    // Creación de divisiones de la medida fundamental, línea 3, 4 y 5
+    l3 = new Line(*primeLine,
+                    interMF.x + (pt1.x - interMF.x),
+                    interMF.y + (pt1.y - interMF.y)
+                    );
+    l4 = new Line(*primeLine,
+                    interMF.x + 2 * (pt1.x - interMF.x),
+                    interMF.y + 2 * (pt1.y - interMF.y)
+                    );
+    l5 = new Line(*primeLine,
+                    interMF.x + 3 * (pt1.x - interMF.x),
+                    interMF.y + 3 * (pt1.y - interMF.y)
+                    );
+
+    // Creación de línea 6, perpendicular a la línea 3, paralela a la principal. Toca punto externo
+    l6 = new Line(*l3, ptExt.x, ptExt.y);
+
+    // Encontrar Punto Interno 4
+    for (int i = !isLeft * (source.cols - 1);
+        isLeft * (i < source.cols) + !isLeft * (i >= 0) ;
+        i += isLeft - !isLeft) {
+        if ( source.at<cv::Vec3b>(l4->getY(i), i) != cv::Vec3b(0, 0, 0) ) {
+            ptInt4.x = i;
+            ptInt4.y = l4->getY(i);
+            break;
+            }
+        }
+
+    // Encontrar Punto Externo 4
+    for (int i = isLeft * (source.cols - 1);
+        isLeft * (i >= 0) + !isLeft * (i < source.cols);
+        i += - isLeft + !isLeft) {
+        if ( source.at<cv::Vec3b>(cv::Point(i, l4->getY(i))) != cv::Vec3b(0, 0, 0) ) {
+            ptExt4.x = i;
+            ptExt4.y = l4->getY(i);
+            break;
+            }
+        }
+
+    // Encontrar Punto Interno 5
+    for (int i = !isLeft * (source.cols - 1);
+        isLeft * (i < source.cols) + !isLeft * (i >= 0) ;
+        i += isLeft - !isLeft) {
+        if ( source.at<cv::Vec3b>(l5->getY(i), i) != cv::Vec3b(0, 0, 0) ) {
+            ptInt5.x = i;
+            ptInt5.y = l5->getY(i);
+            break;
+            }
+        }
+
+    // Encontrar Punto Externo 5
+    for (int i = isLeft * (source.cols - 1);
+        isLeft * (i >= 0) + !isLeft * (i < source.cols);
+        i += - isLeft + !isLeft) {
+        if ( source.at<cv::Vec3b>(cv::Point(i, l5->getY(i))) != cv::Vec3b(0, 0, 0) ) {
+            ptExt5.x = i;
+            ptExt5.y = l5->getY(i);
+            break;
+            }
+        }
+
+
+    // Obtener línea 7
+    l7 = new Line(primeLine->getSlope(), ptExt4.x, ptExt4.y);
+    // Obtener línea 8
+    l8 = new Line(primeLine->getSlope(), ptExt5.x, ptExt5.y);
+
+    // Encontrar punto 9
+    //ptInt9 = ImgProcessing::findLowestIntern( bordered, final, angle, ptInt4, ptInt5 );
+    l9 = new Line(primeLine->getSlope(), ptInt9.x, ptInt9.y);
+
+
+    // Obtener X
+    // Intersección de una línea perpendicular a las dos líneas que se quiere medir la distancia entre ellas.
+    // Se eligió la línea 4 como la que intersecta a la principal y  a la línea 6.
+    interX1.x = l4->getIntersectPoint(*primeLine ) ;
+    interX1.y = l4->getY( interX1.x );
+    interX2.x = l4->getIntersectPoint(*l6 );
+    interX2.y = l4->getY( interX2.x );
+
+    // Obtener Y
+    interY1.x = l4->getIntersectPoint(*l7 );
+    interY1.y = l4->getY( interY1.x );
+    interY2.x = l4->getIntersectPoint(*l9 );
+    interY2.y = l4->getY( interY2.x );
+    interAY.x = l4->getIntersectPoint(*primeLine );
+    interAY.y = l4->getY( interAY.x );
+
+    // Obtener TA
+    interTA.x = l5->getIntersectPoint( *primeLine );
+    interTA.y = l5->getY( interTA.x );
+
+    cv::circle( marked, pt1, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, pt1P, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, pt2, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, pt2P, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptExt, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interMF, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptExt4, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptExt5, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt4, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt5, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt9, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interX1, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interX2, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interY1, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interY2, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interAY, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interTA, 3, cv::Scalar(0, 0, 255), 2);
+
+    primeLine->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    perPrimePt2->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    perPrimePt2P->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    l3->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    l4->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    l5->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    l6->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    l7->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    l8->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    l9->draw( marked, cv::Scalar( 200, 200, 100 ) );
 
     return marked;
     }

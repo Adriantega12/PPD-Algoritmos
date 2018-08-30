@@ -22,34 +22,34 @@ class Line {
 		// Recta paralela con ordenada al origen relativa
         Line(Line&, int);
 		// Recta perpendicular que pasa por un punto definido de otra recta
-		Line(Line&, float, float);
+        Line(Line&, int, int);
 
 		// Getters
-		float getSlope();
-		float getYCross();
+        double getSlope();
+        int getYCross();
 
 		// Setters
-		void setSlope(float);
-		void setYCross(float);
+        void setSlope(double);
+        void setYCross(int);
 
 		// Funciones útiles dada una recta definida
-		float getY(float);
-		float getX(float);
+        int getY(int);
+        int getX(int);
 
 		// Etiqueta
 		void setLabel(std::string);
 		std::string getLabel();
 
 		// Obtener punto en X de intersección con otra línea
-		float getIntersectPoint(Line&);
+        int getIntersectPoint(Line&);
 
 		// Dibujar línea
 		void draw( cv::Mat&, cv::Scalar );
 
 		// Funciones útiles donde una recta no está definida
-		static float calculateSlope(float, float, float, float);
-		static float calculateYCross(float, float, float);
-		static float calculatePerpendicularSlope(float);
+        static double calculateSlope(int, int, int, int);
+        static int calculateYCross(int, int, double);
+        static double calculatePerpendicularSlope(double);
 	};
 
 #endif // _LINE_H

@@ -89,13 +89,13 @@ double Line::calculateSlope(int x1, int y1, int x2, int y2) {
     return (double)(y2 - y1) / (x2 - x1);
 	}
 
-float Line::calculateYCross(float x, float y, float m) {
+int Line::calculateYCross(int x, int y, double m) {
 	// y = mx + b
 	// b = y - mx
 	return y - m * x;
 	}
 
-float Line::calculatePerpendicularSlope(float m) {
+double Line::calculatePerpendicularSlope(double m) {
 	// m1 * m2 = -1
 	// m1 = -1 / m2
 	return -1 / m;
