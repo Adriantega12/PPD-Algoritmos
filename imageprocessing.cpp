@@ -109,21 +109,41 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
               ptExt, interMF, ptExt4, ptExt5, ptInt4, ptInt5, ptInt9,
               interX1, interX2, interY1, interY2, interAY, interTA;
     Line *primeLine, *perPrimePt2, *perPrimePt2P, *l3, *l4, *l5, *l6, *l7, *l8, *l9;
+    bool found;
 
     // Encontrar Punto 2 y Punto 2'
+    // Punto 2
     /*
-     * Lo que hace esta parte es aprovechar el margen que hay de "sobra" en la foto del pie para encontrar los puntos 2 y 2'.
-     * Este margen nos permite conocer la posición en Y de antemano de ambos puntos, puesto que no hay variabilidad sobre esto, porque
-     * los puntos anterior y posteriores ya se encontraron al hacer la separación.
+     * Búsqueda de arriba hacia abajo
      */
-    for ( int x = 0; x < source.cols; ++x ) {
-        if ( !pt2.x and source.at<cv::Vec3b>( cv::Point( x, pt2.y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
-            pt2.x = x;
+    found = false;
+    for (int y = 0; y < source.rows; ++y) {
+        for (int x = 0; x < source.cols; ++x) {
+            if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == cv::Vec3b(255, 255, 255) ) {
+                pt2 = cv::Point(x, y);
+                found = true;
+                break;
+                }
             }
-        if ( !pt2P.x and source.at<cv::Vec3b>( cv::Point( x, pt2P.y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
-            pt2P.x = x;
+        if (found) {
+            break;
             }
-        if ( pt2.x and pt2P.x ) {
+        }
+
+    // Punto 2'
+    /*
+     * Búsqueda de abajo hacia arriba
+     */
+    found = false;
+    for (int y = source.rows - 1; y >= 0; --y) {
+        for (int x = 0; x < source.cols; ++x) {
+            if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == cv::Vec3b(255, 255, 255) ) {
+                pt2P = cv::Point(x, y);
+                found = true;
+                break;
+                }
+            }
+        if (found) {
             break;
             }
         }
@@ -133,14 +153,18 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
      * La misma lógica es utilizada para encontrar el Punto 1, excepto que la variable sería el eje Y.
      */
     // p2.getY() + ( distY / 5 )
-
     int footLength = pt2P.y - pt2.y;
-    for ( int y = !isLeft * (source.cols - 1);
-          isLeft * (y < source.rows) + !isLeft * (y >= 0);
-          y += isLeft - !isLeft ) {
-        if ( source.at<cv::Vec3b>( cv::Point( pt1.x, y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
-            pt1.y = y;
-            break;
+    int distance = isLeft * source.cols;
+    found = false;
+    for (int y = pt2.y + ( footLength / 5 ); y < pt2.y + (footLength / 2); ++y) {
+        for (int x = !isLeft * (source.cols - 1);
+                 isLeft * (x < source.cols) + !isLeft * (x >= 0);
+                 x += isLeft - !isLeft ) {
+            if (source.at<cv::Vec3b>(cv::Point(x, y)) == cv::Vec3b(255, 255, 255)
+                and ( isLeft * (x < distance) + !isLeft * (x > distance) ) ) {
+                distance = x;
+                pt1 = cv::Point(x, y);
+                }
             }
         }
 
@@ -154,8 +178,7 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
               x += isLeft - !isLeft ) {
             if ( source.at<cv::Vec3b>( cv::Point( x, y ) ) == cv::Vec3b( 255, 255, 255 ) ) {
                 if ( isLeft * (x < pt1P.x) + !isLeft * ( x > pt1P.x ) ) {
-                    pt1P.x = x;
-                    pt1P.y = y;
+                    pt1P = cv::Point(x, y);
                     }
                 break;
                 }
@@ -451,6 +474,20 @@ bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, c
 
     // No está bien la división
     if ( rrBorder.x > llBorder.x ) {
+        return false;
+        }
+
+    cv::Point rightRectPoint = cv::Point( rlBorder.x - MARGIN, ruBorder.y - MARGIN );
+    int rightRectWidth = rrBorder.x - rlBorder.x + 2 * MARGIN;
+    int rightRectHeight = rbBorder.y - ruBorder.y + 2 * MARGIN;
+    cv::Point leftRectPoint = cv::Point( llBorder.x - MARGIN, luBorder.y - MARGIN );
+    int leftRectWidth = lrBorder.x - llBorder.x + 2 * MARGIN;
+    int leftRectHeight = lbBorder.y - luBorder.y + 2 * MARGIN;
+
+    if ( rightRectPoint.x + rightRectWidth >= source.cols or
+         rightRectPoint.y + rightRectHeight >= source.rows or
+         leftRectPoint.x + leftRectWidth >= source.cols or
+         leftRectPoint.y + leftRectHeight >= source.rows) {
         return false;
         }
 

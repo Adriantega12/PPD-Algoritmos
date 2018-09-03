@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     markedRight = ImageProcessing::hernandezCorvo( rightFoot, false );
 
     // Guardar imágenes
-    for ( int i = 0; i < ImageProcessing::NUMBER_OF_COLORS - 2; ++i ) {
+    for ( int i = 0; i < ImageProcessing::NUMBER_OF_COLORS - 4; ++i ) {
         binMats = ImageProcessing::binarize( scaleColorMats.at(i) );
         erodedMats = ImageProcessing::erode( binMats );
         ImageProcessing::separateFeet( erodedMats, rMats, lMats );
