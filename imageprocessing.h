@@ -42,7 +42,10 @@ class ImageProcessing {
         static cv::Mat hernandezCorvo( const cv::Mat&, bool );
 
         // Feet detection
-        static bool separateFeet( const cv::Mat&, cv::Mat&, cv::Mat& );
+        static bool separateFeet(const cv::Mat&,
+                                    cv::Mat&, cv::Mat&,
+                                    cv::Rect&,
+                                    cv::Rect& );
     };
 
 #endif // IMAGEPROCESSING_H

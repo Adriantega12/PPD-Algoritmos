@@ -321,7 +321,7 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     }
 
 // Feet detection
-bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, cv::Mat& leftFoot ) {
+bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, cv::Mat& leftFoot, cv::Rect& right, cv::Rect& left ) {
     /*
      * La notación se torna un tanto complicada aquí porque hay 8 puntos que localizar, 4 de cada pie al menos.
      * Entonces, las variables se nombraran de acuerdo a la siguiente notación:
@@ -491,10 +491,10 @@ bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, c
         return false;
         }
 
-    rightFoot = source( cv::Rect( rlBorder.x - MARGIN, ruBorder.y - MARGIN,
+    rightFoot = source( right = cv::Rect( rlBorder.x - MARGIN, ruBorder.y - MARGIN,
                                   rrBorder.x - rlBorder.x + 2 * MARGIN,
                                   rbBorder.y - ruBorder.y + 2 * MARGIN ) ).clone();
-    leftFoot = source( cv::Rect( llBorder.x - MARGIN, luBorder.y - MARGIN,
+    leftFoot = source( left = cv::Rect( llBorder.x - MARGIN, luBorder.y - MARGIN,
                                              lrBorder.x - llBorder.x + 2 * MARGIN,
                                              lbBorder.y - luBorder.y + 2 * MARGIN ) ).clone();
 
