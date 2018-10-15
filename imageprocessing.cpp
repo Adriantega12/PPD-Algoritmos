@@ -264,14 +264,31 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     l8 = new Line(primeLine->getSlope(), ptExt5.x, ptExt5.y);
 
     // Encontrar punto 9
-    //ptInt9 = ImgProcessing::findLowestIntern( bordered, final, angle, ptInt4, ptInt5 );
+    int x, y;
+    distance = 0;
+    for (int i = ptInt4.y + 1; i < ptInt5.y; ++i) {
+        for (int j = !isLeft * (source.cols - 1);
+                 isLeft * (j < source.cols) + !isLeft * (j >= 0);
+                 j += isLeft - !isLeft) {
+            if ( source.at<cv::Vec3b>(cv::Point(i, j)) != cv::Vec3b(0, 0, 0) ) {
+                if ( isLeft * (j > distance) + !isLeft * (source.cols - j > distance)) {
+                    distance = isLeft * j + !isLeft * (source.cols - j);
+                    x = j;
+                    y = i;
+                    }
+                break;
+                }
+            }
+        }
+    ptInt9.x = x;
+    ptInt9.y = y;
     l9 = new Line(primeLine->getSlope(), ptInt9.x, ptInt9.y);
 
 
     // Obtener X
     // Intersección de una línea perpendicular a las dos líneas que se quiere medir la distancia entre ellas.
     // Se eligió la línea 4 como la que intersecta a la principal y  a la línea 6.
-    interX1.x = l4->getIntersectPoint(*primeLine ) ;
+    interX1.x = l4->getIntersectPoint(*primeLine );
     interX1.y = l4->getY( interX1.x );
     interX2.x = l4->getIntersectPoint(*l6 );
     interX2.y = l4->getY( interX2.x );
@@ -288,7 +305,26 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     interTA.x = l5->getIntersectPoint( *primeLine );
     interTA.y = l5->getY( interTA.x );
 
-    cv::circle( marked, pt1, 3, cv::Scalar(0, 0, 255), 2);
+    qDebug() << (isLeft ? "Pie izquierdo" : "Pie derecho") << ":";
+
+    int medidaX = sqrt( pow( isLeft * (interX1.x - interX2.x) + !isLeft * (interX2.x - interX1.x), 2) +
+                        pow(interX2.y - interX1.y, 2) );
+    qDebug() << "X, anchura del metatarso: " << medidaX;
+    int medidaY = sqrt( pow(interY2.x - interY1.x, 2) +
+                        pow(interY2.y - interY1.y, 2) );
+    qDebug() << "Y: " << medidaY;
+    int medidaAY = sqrt( pow(interAY.x - interY1.x, 2) +
+                         pow(interAY.y - interY1.y, 2) );
+    qDebug() << "AY, complemento de Y: " << medidaAY;
+    int medidaTA = sqrt( pow(interTA.x - ptExt5.x, 2) +
+                         pow(interTA.x - ptExt5.y, 2) );
+    qDebug() << "TA, anchura del talón: " << medidaTA;
+
+    // Impresión
+    double percent = ((medidaX - medidaY) / (double) medidaX) * 100;
+    qDebug() << "Porcentaje: " << percent << "\%\n" ;
+
+    /*cv::circle( marked, pt1, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt1P, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt2, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt2P, 3, cv::Scalar(0, 0, 255), 2);
@@ -297,14 +333,14 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     cv::circle( marked, ptExt4, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, ptExt5, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, ptInt4, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptInt5, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptInt9, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt5, 3, cv::Scalar(0, 0, 255), 2);*/
+    //cv::circle( marked, ptInt9, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, interX1, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, interX2, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interY1, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interY2, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interAY, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interTA, 3, cv::Scalar(0, 0, 255), 2);
+    //cv::circle( marked, interY1, 3, cv::Scalar(0, 0, 255), 2);
+    //cv::circle( marked, interY2, 3, cv::Scalar(0, 0, 255), 2);
+    /*cv::circle( marked, interAY, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interTA, 3, cv::Scalar(0, 0, 255), 2);*/
 
     primeLine->draw( marked, cv::Scalar( 200, 200, 100 ) );
     perPrimePt2->draw( marked, cv::Scalar( 200, 200, 100 ) );

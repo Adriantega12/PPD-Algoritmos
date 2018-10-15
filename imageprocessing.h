@@ -1,6 +1,9 @@
 #ifndef IMAGEPROCESSING_H
 #define IMAGEPROCESSING_H
 
+// Qt
+#include <QDebug>
+
 // OpenCV
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
