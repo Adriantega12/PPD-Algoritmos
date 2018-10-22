@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
     // Erosionar imagen
     erode = ImageProcessing::erode( binary );
     erode.copyTo( separateFeet );
+    cv::imwrite( "eroded.jpg", separateFeet);
 
     // Generar las distintas imágenes de toda la escala de colores
     scaleColorMats = ImageProcessing::scaleColors( source );
@@ -42,8 +43,8 @@ int main(int argc, char *argv[]) {
         ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot, rightRect, leftRect );
         cv::Mat rightImg = source( rightRect ).clone(),
                 leftImg = source( leftRect ).clone();
-        cv::imwrite(  "r.jpg", rightImg );
-        cv::imwrite(  "l.jpg", leftImg );
+        cv::imwrite( "right.jpg", rightImg );
+        cv::imwrite( "left.jpg", leftImg );
         }
 
     // Hernández-Corvo

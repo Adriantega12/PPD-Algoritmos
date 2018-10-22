@@ -110,6 +110,7 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
               interX1, interX2, interY1, interY2, interAY, interTA;
     Line *primeLine, *perPrimePt2, *perPrimePt2P, *l3, *l4, *l5, *l6, *l7, *l8, *l9;
     bool found;
+    int distance;
 
     // Encontrar Punto 2 y Punto 2'
     // Punto 2
@@ -154,7 +155,7 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
      */
     // p2.getY() + ( distY / 5 )
     int footLength = pt2P.y - pt2.y;
-    int distance = isLeft * source.cols;
+    distance = isLeft * source.cols;
     found = false;
     for (int y = pt2.y + ( footLength / 5 ); y < pt2.y + (footLength / 2); ++y) {
         for (int x = !isLeft * (source.cols - 1);
@@ -210,6 +211,21 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
                     interMF.y + 3 * (pt1.y - interMF.y)
                     );
 
+    // Encontrar punto más externo entre línea 3 y línea 4.
+    distance = source.cols - 1;
+    for (int x = isLeft * (source.cols - 1);
+         isLeft * (x >= 0) + !isLeft * (x < source.cols);
+         x += !isLeft - isLeft) {
+        for (int y = l3->getY(x); y < l4->getY(x); ++y) {
+            if (source.at<cv::Vec3b>(cv::Point(x, y)) != cv::Vec3b(0, 0, 0) and
+                (x < distance)) {
+                distance = isLeft * (source.cols - x) + !isLeft * x;
+                ptExt = cv::Point(x, y);
+                }
+            }
+        }
+
+
     // Creación de línea 6, perpendicular a la línea 3, paralela a la principal. Toca punto externo
     l6 = new Line(*l3, ptExt.x, ptExt.y);
 
@@ -263,25 +279,32 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     // Obtener línea 8
     l8 = new Line(primeLine->getSlope(), ptExt5.x, ptExt5.y);
 
-    // Encontrar punto 9
-    int x, y;
-    distance = 0;
-    for (int i = ptInt4.y + 1; i < ptInt5.y; ++i) {
-        for (int j = !isLeft * (source.cols - 1);
-                 isLeft * (j < source.cols) + !isLeft * (j >= 0);
-                 j += isLeft - !isLeft) {
-            if ( source.at<cv::Vec3b>(cv::Point(i, j)) != cv::Vec3b(0, 0, 0) ) {
-                if ( isLeft * (j > distance) + !isLeft * (source.cols - j > distance)) {
-                    distance = isLeft * j + !isLeft * (source.cols - j);
-                    x = j;
-                    y = i;
-                    }
-                break;
+    // Encontrar punto más externo de la zona interna entre la línea 4 y 5.
+    // Se llamará ptInt9. Dicho punto ayudará a trazar la línea 9.
+    /*distance = source.cols;
+    for (int x = 0; x < ptInt4.x or x < ptInt5.x; ++x) {
+        for (int y = l4->getY(x); y < l5->getY(x); ++y) {
+            if (source.at<cv::Vec3b>(cv::Point(x, y)) != cv::Vec3b(0, 0, 0) and
+                    x < distance) {
+                distance = x;
+                ptInt9 = cv::Point(x, y);
                 }
             }
-        }
-    ptInt9.x = x;
-    ptInt9.y = y;
+        }*/
+    distance = source.cols;
+        for (int x = !isLeft * (source.cols - 1);
+             isLeft * (x < ptInt4.x or x < ptInt5.x) +
+             !isLeft * (x > ptInt4.x or x > ptInt5.x);
+             x += isLeft - !isLeft) {
+            for (int y = l4->getY(x); y < l5->getY(x); ++y) {
+                if (source.at<cv::Vec3b>(cv::Point(x, y)) != cv::Vec3b(0, 0, 0) and
+                    ( isLeft * (x < distance) + !isLeft * ((source.cols - x) < distance) ) ) {
+                    distance = isLeft * x + !isLeft * (source.cols - x);
+                    ptInt9 = cv::Point(x, y);
+                    }
+                }
+            }
+
     l9 = new Line(primeLine->getSlope(), ptInt9.x, ptInt9.y);
 
 
@@ -305,26 +328,21 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     interTA.x = l5->getIntersectPoint( *primeLine );
     interTA.y = l5->getY( interTA.x );
 
-    qDebug() << (isLeft ? "Pie izquierdo" : "Pie derecho") << ":";
-
-    int medidaX = sqrt( pow( isLeft * (interX1.x - interX2.x) + !isLeft * (interX2.x - interX1.x), 2) +
-                        pow(interX2.y - interX1.y, 2) );
-    qDebug() << "X, anchura del metatarso: " << medidaX;
-    int medidaY = sqrt( pow(interY2.x - interY1.x, 2) +
-                        pow(interY2.y - interY1.y, 2) );
-    qDebug() << "Y: " << medidaY;
-    int medidaAY = sqrt( pow(interAY.x - interY1.x, 2) +
-                         pow(interAY.y - interY1.y, 2) );
-    qDebug() << "AY, complemento de Y: " << medidaAY;
-    int medidaTA = sqrt( pow(interTA.x - ptExt5.x, 2) +
-                         pow(interTA.x - ptExt5.y, 2) );
-    qDebug() << "TA, anchura del talón: " << medidaTA;
+    int medidaX = sqrt(pow( interX1.x - interX2.x, 2) + pow(interX2.y - interX1.y, 2));
+    int medidaY = sqrt(pow(interY2.x - interY1.x, 2) + pow(interY2.y - interY1.y, 2));
+    int medidaAY = sqrt(pow(interAY.x - interY1.x, 2) + pow(interAY.y - interY1.y, 2));
+    int medidaTA = sqrt(pow(interTA.x - ptExt5.x, 2) + pow(interTA.x - ptExt5.y, 2));
+    double percent = ((medidaX - medidaY) / (double) medidaX) * 100;
 
     // Impresión
-    double percent = ((medidaX - medidaY) / (double) medidaX) * 100;
+    qDebug() << (isLeft ? "Pie izquierdo" : "Pie derecho") << ":";
+    qDebug() << "X, anchura del metatarso: " << medidaX;
+    qDebug() << "Y: " << medidaY;
+    qDebug() << "AY, complemento de Y: " << medidaAY;
+    qDebug() << "TA, anchura del talón: " << medidaTA;
     qDebug() << "Porcentaje: " << percent << "\%\n" ;
 
-    /*cv::circle( marked, pt1, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, pt1, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt1P, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt2, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt2P, 3, cv::Scalar(0, 0, 255), 2);
@@ -333,14 +351,14 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     cv::circle( marked, ptExt4, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, ptExt5, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, ptInt4, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptInt5, 3, cv::Scalar(0, 0, 255), 2);*/
-    //cv::circle( marked, ptInt9, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interX1, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interX2, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt5, 3, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt9, 3, cv::Scalar(0, 255, 0), 2);
+    //cv::circle( marked, interX1, 3, cv::Scalar(0, 0, 255), 2);
+    //cv::circle( marked, interX2, 3, cv::Scalar(0, 0, 255), 2);
     //cv::circle( marked, interY1, 3, cv::Scalar(0, 0, 255), 2);
     //cv::circle( marked, interY2, 3, cv::Scalar(0, 0, 255), 2);
-    /*cv::circle( marked, interAY, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interTA, 3, cv::Scalar(0, 0, 255), 2);*/
+    //cv::circle( marked, interAY, 3, cv::Scalar(0, 0, 255), 2);
+    //cv::circle( marked, interTA, 3, cv::Scalar(0, 0, 255), 2);
 
     primeLine->draw( marked, cv::Scalar( 200, 200, 100 ) );
     perPrimePt2->draw( marked, cv::Scalar( 200, 200, 100 ) );
@@ -446,7 +464,7 @@ bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, c
 
     // Right foot upper border
     isntFootRow = true;
-    for ( y = 0; y < source.rows; ++y ) {
+    for ( y = MARGIN; y < source.rows; ++y ) {
         for ( x = rlBorder.x; x < rrBorder.x; ++x ) {
             if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == cv::Vec3b( 255, 255, 255 ) ) {
                 ruBorder = cv::Point( x, y );
@@ -478,7 +496,7 @@ bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, c
 
     // Left foot upper border
     isntFootRow = true;
-    for ( y = 0; y < source.rows; ++y ) {
+    for ( y = MARGIN; y < source.rows; ++y ) {
         for ( x = llBorder.x; x < lrBorder.x; ++x ) {
             if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == cv::Vec3b( 255, 255, 255 ) ) {
                 luBorder = cv::Point( x, y );
