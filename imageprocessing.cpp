@@ -410,7 +410,7 @@ bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, c
 
     // Right foot upper border
     isntFootRow = true;
-    for ( y = 0; y < source.rows; ++y ) {
+    for ( y = MARGIN; y < source.rows; ++y ) {
         for ( x = rlBorder.x; x < rrBorder.x; ++x ) {
             if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == cv::Vec3b( 255, 255, 255 ) ) {
                 ruBorder = cv::Point( x, y );
@@ -442,7 +442,7 @@ bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, c
 
     // Left foot upper border
     isntFootRow = true;
-    for ( y = 0; y < source.rows; ++y ) {
+    for ( y = MARGIN; y < source.rows; ++y ) {
         for ( x = llBorder.x; x < lrBorder.x; ++x ) {
             if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == cv::Vec3b( 255, 255, 255 ) ) {
                 luBorder = cv::Point( x, y );

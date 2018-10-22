@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
     binary = ImageProcessing::binarize( source );
     erode = ImageProcessing::erode( binary );
     erode.copyTo( separateFeet );
+    cv::imwrite( "eroded.jpg", separateFeet);
 
     if ( parser.has("-s") ) {
         //scaleColorMats = ImageProcessing::scaleColors( source );
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]) {
         ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot, rightRect, leftRect );
         cv::Mat rightImg = source( rightRect ).clone(),
                 leftImg = source( leftRect ).clone();
+
         cv::imwrite( "right.jpg", rightImg );
         cv::imwrite( "left.jpg", leftImg );
         }
