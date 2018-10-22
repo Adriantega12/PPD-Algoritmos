@@ -342,6 +342,11 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     qDebug() << "TA, anchura del talón: " << medidaTA;
     qDebug() << "Porcentaje: " << percent << "\%\n" ;
 
+    std::string fileName = (isLeft ? "lData.txt" : "rData.txt");
+    std::ofstream file(fileName, std::ios::out | std::ios::trunc );
+    file << percent << std::endl;
+    file.close();
+
     cv::circle( marked, pt1, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt1P, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, pt2, 3, cv::Scalar(0, 0, 255), 2);
