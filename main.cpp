@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
                                   "{ @input | Input feet image }"
                                   "{ -s     | Output separate feet }"
                                   "{ -hc    | Output Hernandez-Corvo algorithm }"
-                                  "{ -pc    | Output pixel count }"
+                                  //"{ -pc    | Output pixel count }"
                                   );
 
     // Cargar imagen
@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
 
     // Separar pies
     cv::Rect rightRect, leftRect;
-    ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot, rightRect, leftRect );
     if ( parser.has( "-s" ) ) {
+        ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot, rightRect, leftRect );
         cv::Mat rightImg = source( rightRect ).clone(),
                 leftImg = source( leftRect ).clone();
         cv::imwrite( "right.jpg", rightImg );
@@ -61,12 +61,12 @@ int main(int argc, char *argv[]) {
         cv::imwrite(  "lHC.jpg", lHCMats );
         }
 
-    if ( parser.has("-pc") ) {
+    //if ( parser.has("-pc") ) {
+    if (true) {
         cv::Mat rightImg = source( rightRect ).clone(),
                 leftImg = source( leftRect ).clone();
         ImageProcessing::countPixels(rightImg, ImageProcessing::rightPixelCount);
         ImageProcessing::countPixels(leftImg, ImageProcessing::leftPixelCount);
-
         std::ofstream rightFile("rData.txt", std::ios::out | std::ios::app);
         std::ofstream leftFile("lData.txt", std::ios::out | std::ios::app);
         for (int i = 0; i < ImageProcessing::rightPixelCount.size(); ++i) {
