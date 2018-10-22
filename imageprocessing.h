@@ -27,7 +27,10 @@ class ImageProcessing {
         static cv::Vec3b SCALE[NUMBER_OF_COLORS];   // Vector de escala de colores
         static const int MARGIN = 5;              // Pixeles de sobra
 
+
     public:
+        static std::vector<int> leftPixelCount;
+        static std::vector<int> rightPixelCount;
 
         ImageProcessing();
 
@@ -44,6 +47,9 @@ class ImageProcessing {
 
         // Processing
         static cv::Mat hernandezCorvo( const cv::Mat&, bool );
+        // Color processing
+        static void countPixels(const cv::Mat&, std::vector<int>& counter);
+
 
         // Feet detection
         static bool separateFeet(const cv::Mat&,

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include <QDir>
 
@@ -21,6 +22,7 @@ int main(int argc, char *argv[]) {
                                   "{ @input | Input feet image }"
                                   "{ -s     | Output separate feet }"
                                   "{ -hc    | Output Hernandez-Corvo algorithm }"
+                                  "{ -pc    | Output pixel count }"
                                   );
 
     // Cargar imagen
@@ -38,9 +40,9 @@ int main(int argc, char *argv[]) {
     scaleColorMats = ImageProcessing::scaleColors( source );
 
     // Separar pies
+    cv::Rect rightRect, leftRect;
+    ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot, rightRect, leftRect );
     if ( parser.has( "-s" ) ) {
-        cv::Rect rightRect, leftRect;
-        ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot, rightRect, leftRect );
         cv::Mat rightImg = source( rightRect ).clone(),
                 leftImg = source( leftRect ).clone();
         cv::imwrite( "right.jpg", rightImg );
@@ -49,7 +51,7 @@ int main(int argc, char *argv[]) {
 
     // Hernández-Corvo
     if ( parser.has( "-hc" ) ) {
-        cv::Rect rightRect, leftRect;
+        //cv::Rect rightRect, leftRect;
         binMats = ImageProcessing::binarize( scaleColorMats.at(COLOR_INDEX) );
         erodedMats = ImageProcessing::erode( binMats );
         ImageProcessing::separateFeet( erodedMats, rMats, lMats, rightRect, leftRect );
@@ -57,6 +59,22 @@ int main(int argc, char *argv[]) {
         rHCMats = ImageProcessing::hernandezCorvo( rMats, false );
         cv::imwrite(  "rHC.jpg", rHCMats );
         cv::imwrite(  "lHC.jpg", lHCMats );
+        }
+
+    if ( parser.has("-pc") ) {
+        cv::Mat rightImg = source( rightRect ).clone(),
+                leftImg = source( leftRect ).clone();
+        ImageProcessing::countPixels(rightImg, ImageProcessing::rightPixelCount);
+        ImageProcessing::countPixels(leftImg, ImageProcessing::leftPixelCount);
+
+        std::ofstream rightFile("rData.txt", std::ios::out | std::ios::app);
+        std::ofstream leftFile("lData.txt", std::ios::out | std::ios::app);
+        for (int i = 0; i < ImageProcessing::rightPixelCount.size(); ++i) {
+            rightFile << ImageProcessing::rightPixelCount[i] << std::endl;
+            leftFile << ImageProcessing::leftPixelCount[i] << std::endl;
+            }
+        rightFile.close();
+        leftFile.close();
         }
 
     return 0;

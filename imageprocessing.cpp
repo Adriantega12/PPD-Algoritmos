@@ -1,6 +1,8 @@
 #include "imageprocessing.h"
 
 cv::Vec3b ImageProcessing::SCALE[ImageProcessing::NUMBER_OF_COLORS] = { cv::Vec3b(0, 0, 0) };
+std::vector<int> ImageProcessing::leftPixelCount = std::vector<int>();
+std::vector<int> ImageProcessing::rightPixelCount = std::vector<int>();
 
 ImageProcessing::ImageProcessing() { }
 
@@ -377,6 +379,23 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     l9->draw( marked, cv::Scalar( 200, 200, 100 ) );
 
     return marked;
+}
+
+void ImageProcessing::countPixels(const cv::Mat& source, std::vector<int>& counter) {
+    int count;
+
+
+    for ( int colorIndex = 0; colorIndex < NUMBER_OF_COLORS; ++colorIndex ) {
+        count = 0;
+        for ( int y = 0; y < source.rows; ++y ) {
+            for ( int x = 0; x < source.cols; ++x ) {
+                if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == SCALE[colorIndex] ) {
+                    count++;
+                    }
+                }
+            }
+        counter.push_back(count);
+        }
     }
 
 // Feet detection
