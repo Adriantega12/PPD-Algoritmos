@@ -69,7 +69,7 @@ cv::Mat ImageProcessing::binarize(const cv::Mat& source ) {
     }
 
 cv::Mat ImageProcessing::erode( const cv::Mat& source ) {
-    const int EROSION_SIZE = 1;
+    const int EROSION_SIZE = 2;
     const int EROSION_TYPE = cv::MORPH_CROSS;
     cv::Mat dest( source.size(), source.type() );
     cv::Mat element = cv::getStructuringElement( EROSION_TYPE,
@@ -220,7 +220,7 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
          x += !isLeft - isLeft) {
         for (int y = l3->getY(x); y < l4->getY(x); ++y) {
             if (source.at<cv::Vec3b>(cv::Point(x, y)) != cv::Vec3b(0, 0, 0) and
-                (x < distance)) {
+                !isLeft * (x < distance) + isLeft * ((source.cols - 1 - x) < distance)) {
                 distance = isLeft * (source.cols - x) + !isLeft * x;
                 ptExt = cv::Point(x, y);
                 }
@@ -360,8 +360,8 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     cv::circle( marked, ptInt4, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, ptInt5, 3, cv::Scalar(0, 0, 255), 2);
     cv::circle( marked, ptInt9, 3, cv::Scalar(0, 255, 0), 2);
-    //cv::circle( marked, interX1, 3, cv::Scalar(0, 0, 255), 2);
-    //cv::circle( marked, interX2, 3, cv::Scalar(0, 0, 255), 2);
+    //cv::circle( marked, interX1, 3, cv::Scalar(255, 255, 0), 3);
+    //cv::circle( marked, interX2, 3, cv::Scalar(0, 255, 255), 2);
     //cv::circle( marked, interY1, 3, cv::Scalar(0, 0, 255), 2);
     //cv::circle( marked, interY2, 3, cv::Scalar(0, 0, 255), 2);
     //cv::circle( marked, interAY, 3, cv::Scalar(0, 0, 255), 2);

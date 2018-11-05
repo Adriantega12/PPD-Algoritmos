@@ -25,7 +25,7 @@ class ImageProcessing {
 
     private:
         static cv::Vec3b SCALE[NUMBER_OF_COLORS];   // Vector de escala de colores
-        static const int MARGIN = 5;              // Pixeles de sobra
+        static const int MARGIN = 0;              // Pixeles de sobra
 
 
     public:
