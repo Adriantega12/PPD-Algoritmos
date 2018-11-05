@@ -79,6 +79,14 @@ cv::Mat ImageProcessing::erode( const cv::Mat& source ) {
     return dest;
     }
 
+cv::Mat ImageProcessing::rotate( const cv::Mat& source, int angle ) {
+    cv::Point2f src_center(source.cols/2.0F, source.rows/2.0F);
+    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, angle, 1.0);
+    cv::Mat dst;
+    cv::warpAffine(source, dst, rot_mat, source.size());
+    return dst;
+    }
+
 // Colors
 std::vector<cv::Mat> ImageProcessing::scaleColors( const cv::Mat& source ) {
     cv::Mat tempContainer;

@@ -42,14 +42,17 @@ class ImageProcessing {
         static cv::Mat binarize(const cv::Mat& );
         static cv::Mat erode( const cv::Mat& );
 
+        // Rotate
+        static cv::Mat rotate(const cv::Mat& , int );
+
         // Colors
         static std::vector<cv::Mat> scaleColors( const cv::Mat& );
 
         // Processing
         static cv::Mat hernandezCorvo( const cv::Mat&, bool );
+
         // Color processing
         static void countPixels(const cv::Mat&, std::vector<int>& counter);
-
 
         // Feet detection
         static bool separateFeet(const cv::Mat&,
