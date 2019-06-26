@@ -54,13 +54,15 @@ class ImageProcessing {
                                     const int,
                                     std::vector<cv::Point>&);
 
+        // Color processing
+        static void countPixels(const cv::Mat&, std::vector<int>&);
+        static int countReds(const cv::Mat&, const cv::Mat&);
+
         // Processing
         static cv::Mat hernandezCorvo( const cv::Mat&,
                                        std::vector<std::vector<cv::Point>>&,
                                        bool );
 
-        // Color processing
-        static void countPixels(const cv::Mat&, std::vector<int>& counter);
 
         // Feet detection
         static bool separateFeet(const cv::Mat&,

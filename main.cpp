@@ -88,11 +88,38 @@ int main(int argc, char *argv[]) {
         }
 
     // Enmascarado para contar pixeles en cada área del pie relevante
+    qDebug() << "Pie izquierdo: ";
+    int totalLeft = 0;
+    std::vector<int> pixelsLeft;
     for (int i = 0; i < polyPointsLeft.size(); ++i) {
+        int pixels;
         cv::Mat leftMask = ImageProcessing::polygonMask(source, leftRect, MARGIN, polyPointsLeft[i]);
+        pixels = ImageProcessing::countReds(source, leftMask);
+        pixelsLeft.push_back(pixels);
+        qDebug() << pixels;
+        totalLeft += pixels;
+//        cv::imwrite(std::to_string(i) + "mask_left.bmp", leftMask);
+        }
+
+    for (int i = 0; i < pixelsLeft.size(); ++i) {
+        qDebug() << (double) pixelsLeft[i] / totalLeft * 100.0 << "%";
+        }
+
+    qDebug() << "Pie derecho: ";
+    int totalRight = 0;
+    std::vector<int> pixelsRight;
+    for (int i = 0; i < polyPointsRight.size(); ++i) {
+        int pixels;
         cv::Mat rightMask = ImageProcessing::polygonMask(source, rightRect, MARGIN, polyPointsRight[i]);
-        cv::imwrite(std::to_string(i) + "mask_left.bmp", leftMask);
-        cv::imwrite(std::to_string(i) + "mask_right.bmp", rightMask);
+        pixels = ImageProcessing::countReds(source, rightMask);
+        pixelsRight.push_back(pixels);
+        qDebug() << pixels;
+        totalRight += pixels;
+//        cv::imwrite(std::to_string(i) + "mask_right.bmp", rightMask);
+        }
+
+    for (int i = 0; i < pixelsRight.size(); ++i) {
+        qDebug() << (double) pixelsRight[i] / totalRight * 100.0 << "%";
         }
 
     // Pixel Count

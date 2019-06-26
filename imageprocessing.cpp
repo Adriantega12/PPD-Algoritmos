@@ -24,9 +24,17 @@ void ImageProcessing::initializeImageProcessing() {
             {0, 0, 255}
             };
 
+    cv::Mat img;
+    int rectHeight = ((521 - 15.0) / 13), width = 20;
+    img.create(rectHeight * width, 20, CV_8UC3);
+
     for ( int i = 0; i < ImageProcessing::NUMBER_OF_COLORS; ++i ) {
         ImageProcessing::SCALE[i] = cv::Vec3b(scaleArray[i][0], scaleArray[i][1], scaleArray[i][2]);
+        cv::rectangle( img, cv::Rect(0, i * rectHeight, width, rectHeight ),
+                                cv::Scalar(scaleArray[i][0], scaleArray[i][1], scaleArray[i][2]), CV_FILLED );
         }
+
+    cv::imwrite("scale.jpg", img);
     }
 
 // Filters
@@ -135,6 +143,42 @@ cv::Mat ImageProcessing::polygonMask(const cv::Mat& source,
     cv::fillPoly(mask, polygon, npt, 1, cv::Scalar(255, 255, 255));
 
     return mask;
+    }
+
+void ImageProcessing::countPixels(const cv::Mat& source, std::vector<int>& counter) {
+    int count;
+
+
+    for ( int colorIndex = 0; colorIndex < NUMBER_OF_COLORS; ++colorIndex ) {
+        count = 0;
+        for ( int y = 0; y < source.rows; ++y ) {
+            for ( int x = 0; x < source.cols; ++x ) {
+                if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == SCALE[colorIndex] ) {
+                    count++;
+                    }
+                }
+            }
+        counter.push_back(count);
+    }
+}
+
+int ImageProcessing::countReds(const cv::Mat& source, const cv::Mat& mask) {
+    int count = 0;
+
+    for (int colorIndex = NUMBER_OF_COLORS - 5; colorIndex < NUMBER_OF_COLORS; ++colorIndex) {
+        // qDebug() << SCALE[colorIndex][0] << SCALE[colorIndex][1] << SCALE[colorIndex][2];
+        for ( int y = 0; y < source.rows; ++y ) {
+            for ( int x = 0; x < source.cols; ++x ) {
+                // Si es parte de la máscara y está en la escala
+                if ( mask.at<cv::Vec3b>( cv::Point(x, y) ) == cv::Vec3b(255, 255, 255) and
+                     source.at<cv::Vec3b>( cv::Point(x, y) ) == SCALE[colorIndex] ) {
+                    count++;
+                    }
+                }
+            }
+        }
+
+    return count;
     }
 
 cv::Mat ImageProcessing::hernandezCorvo(const cv::Mat& source, std::vector<std::vector<cv::Point>>& polyList, bool isLeft ) {
@@ -483,23 +527,6 @@ cv::Mat ImageProcessing::hernandezCorvo(const cv::Mat& source, std::vector<std::
 
     return marked;
 }
-
-void ImageProcessing::countPixels(const cv::Mat& source, std::vector<int>& counter) {
-    int count;
-
-
-    for ( int colorIndex = 0; colorIndex < NUMBER_OF_COLORS; ++colorIndex ) {
-        count = 0;
-        for ( int y = 0; y < source.rows; ++y ) {
-            for ( int x = 0; x < source.cols; ++x ) {
-                if ( source.at<cv::Vec3b>( cv::Point(x, y) ) == SCALE[colorIndex] ) {
-                    count++;
-                    }
-                }
-            }
-        counter.push_back(count);
-        }
-    }
 
 // Feet detection
 bool ImageProcessing::separateFeet( const cv::Mat& source, cv::Mat& rightFoot, cv::Mat& leftFoot, cv::Rect& right, cv::Rect& left ) {
