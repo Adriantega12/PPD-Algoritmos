@@ -48,8 +48,16 @@ class ImageProcessing {
         // Colors
         static std::vector<cv::Mat> scaleColors( const cv::Mat& );
 
+        // Polygon mask
+        static cv::Mat polygonMask( const cv::Mat&,
+                                    const cv::Rect&,
+                                    const int,
+                                    std::vector<cv::Point>&);
+
         // Processing
-        static cv::Mat hernandezCorvo( const cv::Mat&, bool );
+        static cv::Mat hernandezCorvo( const cv::Mat&,
+                                       std::vector<std::vector<cv::Point>>&,
+                                       bool );
 
         // Color processing
         static void countPixels(const cv::Mat&, std::vector<int>& counter);

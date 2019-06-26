@@ -85,18 +85,18 @@ void Line::draw( cv::Mat& img, cv::Scalar color ) {
 
 // Funciones útiles donde una recta no está definida
 double Line::calculateSlope(int x1, int y1, int x2, int y2) {
-	// m = (y2 - y1) / (x2 - x1)
+    // m = (y2 - y1) / (x2 - x1)
     return (double)(y2 - y1) / (x2 - x1);
 	}
 
 int Line::calculateYCross(int x, int y, double m) {
 	// y = mx + b
-	// b = y - mx
+    // b = y - mx
 	return y - m * x;
 	}
 
 double Line::calculatePerpendicularSlope(double m) {
 	// m1 * m2 = -1
-	// m1 = -1 / m2
-	return -1 / m;
+    // m1 = -1 / m2
+    return -1 / m;
 	}

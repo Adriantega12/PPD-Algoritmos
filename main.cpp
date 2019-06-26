@@ -10,9 +10,11 @@
 
 int main(int argc, char *argv[]) {
     const int COLOR_INDEX = 4;
+    const int MARGIN = 100;
     const char* fileName;
     std::vector<std::string> args;
     std::vector<cv::Mat> scaleColorMats;
+    std::vector<std::vector<cv::Point>> polyPointsLeft, polyPointsRight;
     cv::Mat source, binary, erode, separateFeet, rightFoot, leftFoot, markedLeft, markedRight,
             binMats, erodedMats, rMats, lMats,rHCMats, lHCMats, rightImg, leftImg;
     cv::Rect rightRect, leftRect;
@@ -55,7 +57,6 @@ int main(int argc, char *argv[]) {
 
     // Hernández-Corvo
     if ( std::find(args.begin(), args.end(), "-hc") != args.end() ) {
-        const int MARGIN = 100;
         cv::Mat bigRight, bigLeft;
 
         binMats = ImageProcessing::binarize( scaleColorMats.at(COLOR_INDEX) );
@@ -79,15 +80,23 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-        lHCMats = ImageProcessing::hernandezCorvo( bigLeft, true );
-        rHCMats = ImageProcessing::hernandezCorvo( bigRight, false );
+        lHCMats = ImageProcessing::hernandezCorvo( bigLeft, polyPointsLeft, true );
+        rHCMats = ImageProcessing::hernandezCorvo( bigRight, polyPointsRight, false );
 
-        cv::imwrite(  "rHC.jpg", rHCMats );
-        cv::imwrite(  "lHC.jpg", lHCMats );
+        cv::imwrite( "rHC.jpg", rHCMats );
+        cv::imwrite( "lHC.jpg", lHCMats );
+        }
+
+    // Enmascarado para contar pixeles en cada área del pie relevante
+    for (int i = 0; i < polyPointsLeft.size(); ++i) {
+        cv::Mat leftMask = ImageProcessing::polygonMask(source, leftRect, MARGIN, polyPointsLeft[i]);
+        cv::Mat rightMask = ImageProcessing::polygonMask(source, rightRect, MARGIN, polyPointsRight[i]);
+        cv::imwrite(std::to_string(i) + "mask_left.bmp", leftMask);
+        cv::imwrite(std::to_string(i) + "mask_right.bmp", rightMask);
         }
 
     // Pixel Count
-    if ( std::find(args.begin(), args.end(), "-pc") != args.end() ) {
+    /*if ( std::find(args.begin(), args.end(), "-pc") != args.end() ) {
         rightImg = source( rightRect ).clone(),
         leftImg = source( leftRect ).clone();
 
@@ -104,7 +113,7 @@ int main(int argc, char *argv[]) {
 
         rightFile.close();
         leftFile.close();
-        }
+        }*/
 
     return 0;
     }

@@ -106,9 +106,38 @@ std::vector<cv::Mat> ImageProcessing::scaleColors( const cv::Mat& source ) {
         }
 
     return colorVectors;
+}
+
+cv::Mat ImageProcessing::polygonMask(const cv::Mat& source,
+                                     const cv::Rect& rect,
+                                     const int margin,
+                                     std::vector<cv::Point>& points) {
+    cv::Mat mask( source.size(), source.type(), cv::Scalar(0) );
+    cv::Point pointsArray[1][4];
+              pointsArray[0][0] = cv::Point(
+                        rect.x + points[0].x - margin/2 + 1,
+                        rect.y + points[0].y - margin/2 + 1
+                    );
+              pointsArray[0][1] = cv::Point(
+                        rect.x + points[1].x - margin/2 + 1,
+                        rect.y + points[1].y - margin/2 + 1
+                    );
+              pointsArray[0][2] = cv::Point(
+                        rect.x + points[2].x - margin/2 + 1,
+                        rect.y + points[2].y - margin/2 + 1
+                    );
+              pointsArray[0][3] = cv::Point(
+                        rect.x + points[3].x - margin/2 + 1,
+                        rect.y + points[3].y - margin/2 + 1
+                    );
+    const cv::Point* polygon[1] = { pointsArray[0] };
+    const int npt[] = { 4 };
+    cv::fillPoly(mask, polygon, npt, 1, cv::Scalar(255, 255, 255));
+
+    return mask;
     }
 
-cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
+cv::Mat ImageProcessing::hernandezCorvo(const cv::Mat& source, std::vector<std::vector<cv::Point>>& polyList, bool isLeft ) {
     cv::Mat marked;
     marked = source.clone();
 
@@ -183,7 +212,7 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     /*
      *
      */
-    for ( int y = footLength / 2; y < source.rows; ++y ) {
+    for ( int y = pt2P.y; y >= pt2.y + 3 * footLength / 5; --y ) {
         for ( int x = !isLeft * (source.cols - 1);
               isLeft * (x < source.cols) + !isLeft * (x >= 0);
               x += isLeft - !isLeft ) {
@@ -208,17 +237,24 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     interMF.y = perPrimePt2->getY( interMF.x );
 
     // Creación de divisiones de la medida fundamental, línea 3, 4 y 5
+    cv::Point distPt1InterMF = cv::Point(pt1.x - interMF.x, pt1.y - interMF.y),
+              // ---- Necesarios para el cálculo de colores -----
+              pt3Int = cv::Point(interMF.x + distPt1InterMF.x, interMF.y + distPt1InterMF.y),
+              pt4Int = cv::Point(interMF.x + 2 * distPt1InterMF.x, interMF.y + 2 * distPt1InterMF.y),
+              pt5Int = cv::Point(interMF.x + 3 * distPt1InterMF.x, interMF.y + 3 * distPt1InterMF.y);
+              // ------------------------------------------------
+
     l3 = new Line(*primeLine,
-                    interMF.x + (pt1.x - interMF.x),
-                    interMF.y + (pt1.y - interMF.y)
+                    pt3Int.x,
+                    pt3Int.y
                     );
     l4 = new Line(*primeLine,
-                    interMF.x + 2 * (pt1.x - interMF.x),
-                    interMF.y + 2 * (pt1.y - interMF.y)
+                    pt4Int.x,
+                    pt4Int.y
                     );
     l5 = new Line(*primeLine,
-                    interMF.x + 3 * (pt1.x - interMF.x),
-                    interMF.y + 3 * (pt1.y - interMF.y)
+                    pt5Int.x,
+                    pt5Int.y
                     );
 
     // Encontrar punto más externo entre línea 3 y línea 4.
@@ -243,7 +279,8 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     for (int i = !isLeft * (source.cols - 1);
         isLeft * (i < source.cols) + !isLeft * (i >= 0) ;
         i += isLeft - !isLeft) {
-        if ( source.at<cv::Vec3b>(l4->getY(i), i) != cv::Vec3b(0, 0, 0) ) {
+        int lineY = l4->getY(i);
+        if ( source.at<cv::Vec3b>(lineY, i) != cv::Vec3b(0, 0, 0) ) {
             ptInt4.x = i;
             ptInt4.y = l4->getY(i);
             break;
@@ -291,32 +328,24 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
 
     // Encontrar punto más externo de la zona interna entre la línea 4 y 5.
     // Se llamará ptInt9. Dicho punto ayudará a trazar la línea 9.
-    /*distance = source.cols;
-    for (int x = 0; x < ptInt4.x or x < ptInt5.x; ++x) {
-        for (int y = l4->getY(x); y < l5->getY(x); ++y) {
-            if (source.at<cv::Vec3b>(cv::Point(x, y)) != cv::Vec3b(0, 0, 0) and
-                    x < distance) {
-                distance = x;
-                ptInt9 = cv::Point(x, y);
-                }
-            }
-        }*/
-    distance = source.cols;
+    distance = 0;
+    for (int y = ptInt4.y; y < ptInt5.y; ++y) {
         for (int x = !isLeft * (source.cols - 1);
-             isLeft * (x < ptInt4.x or x < ptInt5.x) +
-             !isLeft * (x > ptInt4.x or x > ptInt5.x);
+             isLeft * (x < source.cols) +
+             !isLeft * (x >= 0);
              x += isLeft - !isLeft) {
-            for (int y = l4->getY(x); y < l5->getY(x); ++y) {
-                if (source.at<cv::Vec3b>(cv::Point(x, y)) != cv::Vec3b(0, 0, 0) and
-                    ( isLeft * (x < distance) + !isLeft * ((source.cols - x) < distance) ) ) {
+            if (source.at<cv::Vec3b>(cv::Point(x, y)) == cv::Vec3b(255, 255, 255) ) {
+                if ( isLeft * (x > distance) + !isLeft * ((source.cols - x) > distance) ) {
                     distance = isLeft * x + !isLeft * (source.cols - x);
                     ptInt9 = cv::Point(x, y);
                     }
+                break;
                 }
             }
+        }
+
 
     l9 = new Line(primeLine->getSlope(), ptInt9.x, ptInt9.y);
-
 
     // Obtener X
     // Intersección de una línea perpendicular a las dos líneas que se quiere medir la distancia entre ellas.
@@ -338,11 +367,26 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     interTA.x = l5->getIntersectPoint( *primeLine );
     interTA.y = l5->getY( interTA.x );
 
-    int medidaX = sqrt(pow( interX1.x - interX2.x, 2) + pow(interX2.y - interX1.y, 2));
+    int medidaX = sqrt(pow(interX2.x - interX1.x, 2) + pow(interX2.y - interX1.y, 2));
     int medidaY = sqrt(pow(interY2.x - interY1.x, 2) + pow(interY2.y - interY1.y, 2));
     int medidaAY = sqrt(pow(interAY.x - interY1.x, 2) + pow(interAY.y - interY1.y, 2));
     int medidaTA = sqrt(pow(interTA.x - ptExt5.x, 2) + pow(interTA.x - ptExt5.y, 2));
-    double percent = ((medidaX - medidaY) / (double) medidaX) * 100;
+    double percent = ((medidaX - medidaY) / (double) medidaX) * 100.0;
+
+    // Necesario para la escala de colores
+    cv::Point extMF;
+    extMF.x = perPrimePt2->getIntersectPoint(*l6);
+    extMF.y = perPrimePt2->getY(extMF.x);
+    cv::Point pt3Ext = cv::Point(extMF.x + distPt1InterMF.x, extMF.y + distPt1InterMF.y),
+              pt4Ext = cv::Point(extMF.x + 2 * distPt1InterMF.x, extMF.y + 2 * distPt1InterMF.y),
+              pt5Ext = cv::Point(extMF.x + 3 * distPt1InterMF.x, extMF.y + 3 * distPt1InterMF.y);
+
+    cv::Point intLow, extLow;
+    intLow.x = perPrimePt2P->getIntersectPoint(*primeLine);
+    intLow.y = perPrimePt2P->getY(intLow.x);
+    extLow.x = perPrimePt2P->getIntersectPoint(*l6);
+    extLow.y = perPrimePt2P->getY(extLow.x);
+
 
     // Impresión
     qDebug() << (isLeft ? "Pie izquierdo" : "Pie derecho") << ":";
@@ -357,34 +401,85 @@ cv::Mat ImageProcessing::hernandezCorvo( const cv::Mat& source, bool isLeft ) {
     file << percent << std::endl;
     file.close();
 
-    cv::circle( marked, pt1, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, pt1P, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, pt2, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, pt2P, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptExt, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, interMF, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptExt4, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptExt5, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptInt4, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptInt5, 3, cv::Scalar(0, 0, 255), 2);
-    cv::circle( marked, ptInt9, 3, cv::Scalar(0, 255, 0), 2);
-    //cv::circle( marked, interX1, 3, cv::Scalar(255, 255, 0), 3);
-    //cv::circle( marked, interX2, 3, cv::Scalar(0, 255, 255), 2);
-    //cv::circle( marked, interY1, 3, cv::Scalar(0, 0, 255), 2);
-    //cv::circle( marked, interY2, 3, cv::Scalar(0, 0, 255), 2);
-    //cv::circle( marked, interAY, 3, cv::Scalar(0, 0, 255), 2);
-    //cv::circle( marked, interTA, 3, cv::Scalar(0, 0, 255), 2);
+    // Algoritmo usual
+    cv::circle( marked, pt1, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, pt1P, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, pt2, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, pt2P, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptExt, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, interMF, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptExt4, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptExt5, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt4, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt5, 1, cv::Scalar(0, 0, 255), 2);
+    cv::circle( marked, ptInt9, 1, cv::Scalar(0, 255, 0), 2);
+
+    // Escala de colores
+    cv::circle( marked, pt3Int, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, pt4Int, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, pt5Int, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, intLow, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, extMF, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, pt3Ext, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, pt4Ext, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, pt5Ext, 1, cv::Scalar(0, 255, 0), 2);
+    cv::circle( marked, extLow, 1, cv::Scalar(0, 255, 0), 2);
+
+    // Primer sección
+    polyList.push_back(std::vector<cv::Point>());
+    polyList[0].push_back(interMF);
+    polyList[0].push_back(extMF);
+    polyList[0].push_back(pt3Ext);
+    polyList[0].push_back(pt3Int);
+
+    // Segunda sección
+    polyList.push_back(std::vector<cv::Point>());
+    polyList[1].push_back(pt3Int);
+    polyList[1].push_back(pt3Ext);
+    polyList[1].push_back(pt4Ext);
+    polyList[1].push_back(pt4Int);
+
+    // Tercer sección
+    polyList.push_back(std::vector<cv::Point>());
+    polyList[2].push_back(pt4Int);
+    polyList[2].push_back(pt4Ext);
+    polyList[2].push_back(pt5Ext);
+    polyList[2].push_back(pt5Int);
+
+    // Cuarta sección
+    polyList.push_back(std::vector<cv::Point>());
+    polyList[3].push_back(pt5Int);
+    polyList[3].push_back(pt5Ext);
+    polyList[3].push_back(extLow);
+    polyList[3].push_back(intLow);
+
+    // Puntos medios
+    /*cv::circle(marked, cv::Point((pt1.x + ptExt.x)/2, (pt1.y + ptExt.y)/2), 3, cv::Scalar(255, 0, 255));
+    cv::circle(marked, cv::Point((ptExt4.x + ptInt4.x)/2, (ptExt4.y + ptInt4.y)/2), 3, cv::Scalar(255, 0, 255));
+    cv::circle(marked, cv::Point((ptExt5.x + ptInt5.x)/2, (ptExt5.y + ptInt5.y)/2), 3, cv::Scalar(255, 0, 255));*/
+
+    /*cv::line( marked,
+          cv::Point(cv::Point((pt1.x + ptExt.x)/2, (pt1.y + ptExt.y)/2)),
+          cv::Point((ptExt5.x + ptInt5.x)/2, (ptExt5.y + ptInt5.y)/2),
+          cv::Scalar(0,0,255)
+        );*/
 
     primeLine->draw( marked, cv::Scalar( 200, 200, 100 ) );
+    primeLine->draw( marked, cv::Scalar( 0, 0, 200 ) );
     perPrimePt2->draw( marked, cv::Scalar( 200, 200, 100 ) );
     perPrimePt2P->draw( marked, cv::Scalar( 200, 200, 100 ) );
     l3->draw( marked, cv::Scalar( 200, 200, 100 ) );
     l4->draw( marked, cv::Scalar( 200, 200, 100 ) );
     l5->draw( marked, cv::Scalar( 200, 200, 100 ) );
     l6->draw( marked, cv::Scalar( 200, 200, 100 ) );
-    l7->draw( marked, cv::Scalar( 200, 200, 100 ) );
-    l8->draw( marked, cv::Scalar( 200, 200, 100 ) );
-    l9->draw( marked, cv::Scalar( 200, 200, 100 ) );
+//    l7->draw( marked, cv::Scalar( 200, 200, 100 ) );
+//    l8->draw( marked, cv::Scalar( 200, 200, 100 ) );
+//    l9->draw( marked, cv::Scalar( 200, 200, 100 ) );
+
+//    cv::line( marked, interX2, interX1, cv::Scalar(0, 255, 0));
+//    cv::circle( marked, interY2, 3, cv::Scalar(0, 255, 255), 2);
+//    cv::circle( marked, interY1, 3, cv::Scalar(0, 255, 255), 2);
+//    cv::line( marked, interY2, interY1, cv::Scalar(0, 255, 0));
 
     return marked;
 }
