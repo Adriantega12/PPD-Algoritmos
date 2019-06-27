@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
         pixelsLeft.push_back(pixels);
         qDebug() << pixels;
         totalLeft += pixels;
-//        cv::imwrite(std::to_string(i) + "mask_left.bmp", leftMask);
+        cv::imwrite(std::to_string(i) + "mask_left.bmp", leftMask);
         }
 
     for (int i = 0; i < pixelsLeft.size(); ++i) {
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
         pixelsRight.push_back(pixels);
         qDebug() << pixels;
         totalRight += pixels;
-//        cv::imwrite(std::to_string(i) + "mask_right.bmp", rightMask);
+        cv::imwrite(std::to_string(i) + "mask_right.bmp", rightMask);
         }
 
     for (int i = 0; i < pixelsRight.size(); ++i) {
