@@ -32,6 +32,9 @@ class Foot {
         void setPercent(double value);
         void setFootType(const std::string &value);
         void setZonePressure(int, double);
+        void setParentRoute(const std::string &value);
+        void setColorRoute(const std::string &value);
+        void setHcRoute(const std::string &value);
 
         int getX() const;
         int getY() const;
@@ -40,8 +43,11 @@ class Foot {
         double getPercent() const;
         std::string getFootType() const;
         double getZonePressure(int);
+        std::string getParentRoute() const;
+        std::string getColorRoute() const;
+        std::string getHcRoute() const;
 
         std::string toJSON();
-    };
+};
 
 #endif // FOOT_H

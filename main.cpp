@@ -13,12 +13,13 @@ int main(int argc, char *argv[]) {
     Foot right(argv[1], false), left(argv[1]);
     const int COLOR_INDEX = 4;
     const int MARGIN = 100;
-    const char* fileName;
+    std::string fileName;
+    std::string rawFileName;
     std::vector<std::string> args;
     std::vector<cv::Mat> scaleColorMats;
     std::vector<std::vector<cv::Point>> polyPointsLeft, polyPointsRight;
-    cv::Mat source, binary, erode, separateFeet, rightFoot, leftFoot, markedLeft, markedRight,
-            binMats, erodedMats, rMats, lMats,rHCMats, lHCMats, rightImg, leftImg;
+    cv::Mat source, binary, erode, separateFeet, rightFoot, leftFoot, binMats,
+            erodedMats, rMats, lMats,rHCMats, lHCMats, rightImg, leftImg;
     cv::Rect rightRect, leftRect;
 
     // Inicializar IP
@@ -26,7 +27,8 @@ int main(int argc, char *argv[]) {
 
     // Leer parámetros de entrada
     if (argc > 1) {
-        fileName = argv[1];
+        fileName = std::string(argv[1]);
+        rawFileName = fileName.substr(0, fileName.find_first_of("."));
         }
     if (argc > 2) {
         for (int i = 2; i < argc; ++i) {
@@ -43,7 +45,6 @@ int main(int argc, char *argv[]) {
     // Erosionar imagen
     erode = ImageProcessing::erode( binary );
     erode.copyTo( separateFeet );
-    cv::imwrite( "eroded.jpg", separateFeet);
 
     // Generar las distintas imágenes de toda la escala de colores
     scaleColorMats = ImageProcessing::scaleColors( source );
@@ -53,8 +54,6 @@ int main(int argc, char *argv[]) {
         ImageProcessing::separateFeet( separateFeet, rightFoot, leftFoot, rightRect, leftRect );
         rightImg = source( rightRect ).clone(),
         leftImg = source( leftRect ).clone();
-        cv::imwrite( "right.jpg", rightImg );
-        cv::imwrite( "left.jpg", leftImg );
         }
 
     // Hernández-Corvo
@@ -84,9 +83,6 @@ int main(int argc, char *argv[]) {
 
         lHCMats = ImageProcessing::hernandezCorvo( bigLeft, true, polyPointsLeft, left );
         rHCMats = ImageProcessing::hernandezCorvo( bigRight, false, polyPointsRight, right );
-
-        cv::imwrite( "rHC.jpg", rHCMats );
-        cv::imwrite( "lHC.jpg", lHCMats );
         }
 
     // Enmascarado para contar pixeles en cada área del pie relevante
@@ -98,7 +94,6 @@ int main(int argc, char *argv[]) {
         pixels = ImageProcessing::countReds(source, leftMask);
         pixelsLeft.push_back(pixels);
         totalLeft += pixels;
-        cv::imwrite(std::to_string(i) + "mask_left.bmp", leftMask);
         }
 
     for (int i = 0; i < pixelsLeft.size(); ++i) {
@@ -114,7 +109,6 @@ int main(int argc, char *argv[]) {
         pixels = ImageProcessing::countReds(source, rightMask);
         pixelsRight.push_back(pixels);
         totalRight += pixels;
-        cv::imwrite(std::to_string(i) + "mask_right.bmp", rightMask);
         }
 
     for (int i = 0; i < pixelsRight.size(); ++i) {
@@ -122,8 +116,21 @@ int main(int argc, char *argv[]) {
         right.setZonePressure(i, percent);
         }
 
+    left.setParentRoute(fileName);
+    left.setColorRoute(rawFileName + "_left.bmp");
+    left.setHcRoute(rawFileName + "_HCleft.bmp");
+    right.setParentRoute(fileName);
+    right.setColorRoute(rawFileName + "_right.bmp");
+    right.setHcRoute(rawFileName + "_HCright.bmp");
+
+    cv::imwrite( left.getColorRoute(), leftImg );
+    cv::imwrite( right.getColorRoute(), rightImg );
+    cv::imwrite( left.getHcRoute(), lHCMats );
+    cv::imwrite( right.getHcRoute(), rHCMats );
+
     std::cout << "{"
-              << "\"original\": \"" << fileName << "\", "
+              << "\"originalName\": \"" << rawFileName << "\", "
+              << "\"originalRoute\": \"" << fileName << "\", "
               << left.toJSON() << ","
               << right.toJSON()
               << "}";

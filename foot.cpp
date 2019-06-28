@@ -1,10 +1,12 @@
 #include "foot.h"
 
+
+
 Foot::Foot(std::string route, bool iL) : parentRoute(route), isLeft(iL) { }
 
 void Foot::setX(int value) {
     x = value;
-    }
+}
 
 void Foot::setY(int value) {
     y = value;
@@ -28,6 +30,18 @@ void Foot::setFootType(const std::string& value) {
 
 void Foot::setZonePressure(int index, double percent) {
     zonePressure[index] = percent;
+    }
+
+void Foot::setParentRoute(const std::string& value) {
+    parentRoute = value;
+    }
+
+void Foot::setColorRoute(const std::string& value) {
+    colorRoute = value;
+    }
+
+void Foot::setHcRoute(const std::string& value) {
+    hcRoute = value;
     }
 
 int Foot::getX() const {
@@ -58,6 +72,18 @@ double Foot::getZonePressure(int index) {
     return zonePressure[index];
     }
 
+std::string Foot::getParentRoute() const {
+    return parentRoute;
+    }
+
+std::string Foot::getColorRoute() const {
+    return colorRoute;
+    }
+
+std::string Foot::getHcRoute() const {
+    return hcRoute;
+    }
+
 std::string Foot::toJSON() {
     std::ostringstream json;
 
@@ -75,5 +101,3 @@ std::string Foot::toJSON() {
 
     return json.str();
     }
-
-
