@@ -16,10 +16,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     imageprocessing.cpp \
-    line.cpp
+    line.cpp \
+    foot.cpp
 
 HEADERS += \
     imageprocessing.h \
-    line.h
+    line.h \
+    foot.h
 
 LIBS += -lopencv_core -lopencv_imgcodecs -lopencv_imgproc

@@ -181,7 +181,7 @@ int ImageProcessing::countReds(const cv::Mat& source, const cv::Mat& mask) {
     return count;
     }
 
-cv::Mat ImageProcessing::hernandezCorvo(const cv::Mat& source, std::vector<std::vector<cv::Point>>& polyList, bool isLeft ) {
+cv::Mat ImageProcessing::hernandezCorvo(const cv::Mat& source, bool isLeft, std::vector<std::vector<cv::Point>>& polyList, Foot& foot ) {
     cv::Mat marked;
     marked = source.clone();
 
@@ -431,19 +431,11 @@ cv::Mat ImageProcessing::hernandezCorvo(const cv::Mat& source, std::vector<std::
     extLow.x = perPrimePt2P->getIntersectPoint(*l6);
     extLow.y = perPrimePt2P->getY(extLow.x);
 
-
-    // Impresión
-    qDebug() << (isLeft ? "Pie izquierdo" : "Pie derecho") << ":";
-    qDebug() << "X, anchura del metatarso: " << medidaX;
-    qDebug() << "Y: " << medidaY;
-    qDebug() << "AY, complemento de Y: " << medidaAY;
-    qDebug() << "TA, anchura del talón: " << medidaTA;
-    qDebug() << "Porcentaje: " << percent << "\%\n" ;
-
-    std::string fileName = (isLeft ? "lData.txt" : "rData.txt");
-    std::ofstream file(fileName, std::ios::out | std::ios::trunc );
-    file << percent << std::endl;
-    file.close();
+    foot.setX(medidaX);
+    foot.setY(medidaY);
+    foot.setAy(medidaAY);
+    foot.setTa(medidaTA);
+    foot.setPercent(percent);
 
     // Algoritmo usual
     cv::circle( marked, pt1, 1, cv::Scalar(0, 0, 255), 2);

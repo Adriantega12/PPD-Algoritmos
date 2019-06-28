@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include "line.h"
+#include "foot.h"
 
 class ImageProcessing {
     public:
@@ -60,8 +61,9 @@ class ImageProcessing {
 
         // Processing
         static cv::Mat hernandezCorvo( const cv::Mat&,
+                                       bool,
                                        std::vector<std::vector<cv::Point>>&,
-                                       bool );
+                                       Foot& );
 
 
         // Feet detection

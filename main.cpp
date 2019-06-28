@@ -7,8 +7,10 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "imageprocessing.h"
+#include "foot.h"
 
 int main(int argc, char *argv[]) {
+    Foot right(argv[1], false), left(argv[1]);
     const int COLOR_INDEX = 4;
     const int MARGIN = 100;
     const char* fileName;
@@ -80,15 +82,14 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-        lHCMats = ImageProcessing::hernandezCorvo( bigLeft, polyPointsLeft, true );
-        rHCMats = ImageProcessing::hernandezCorvo( bigRight, polyPointsRight, false );
+        lHCMats = ImageProcessing::hernandezCorvo( bigLeft, true, polyPointsLeft, left );
+        rHCMats = ImageProcessing::hernandezCorvo( bigRight, false, polyPointsRight, right );
 
         cv::imwrite( "rHC.jpg", rHCMats );
         cv::imwrite( "lHC.jpg", lHCMats );
         }
 
     // Enmascarado para contar pixeles en cada área del pie relevante
-    qDebug() << "Pie izquierdo: ";
     int totalLeft = 0;
     std::vector<int> pixelsLeft;
     for (int i = 0; i < polyPointsLeft.size(); ++i) {
@@ -96,16 +97,15 @@ int main(int argc, char *argv[]) {
         cv::Mat leftMask = ImageProcessing::polygonMask(source, leftRect, MARGIN, polyPointsLeft[i]);
         pixels = ImageProcessing::countReds(source, leftMask);
         pixelsLeft.push_back(pixels);
-        qDebug() << pixels;
         totalLeft += pixels;
         cv::imwrite(std::to_string(i) + "mask_left.bmp", leftMask);
         }
 
     for (int i = 0; i < pixelsLeft.size(); ++i) {
-        qDebug() << (double) pixelsLeft[i] / totalLeft * 100.0 << "%";
+        double percent = (double) pixelsLeft[i] / totalLeft * 100.0;
+        left.setZonePressure(i, percent);
         }
 
-    qDebug() << "Pie derecho: ";
     int totalRight = 0;
     std::vector<int> pixelsRight;
     for (int i = 0; i < polyPointsRight.size(); ++i) {
@@ -113,34 +113,20 @@ int main(int argc, char *argv[]) {
         cv::Mat rightMask = ImageProcessing::polygonMask(source, rightRect, MARGIN, polyPointsRight[i]);
         pixels = ImageProcessing::countReds(source, rightMask);
         pixelsRight.push_back(pixels);
-        qDebug() << pixels;
         totalRight += pixels;
         cv::imwrite(std::to_string(i) + "mask_right.bmp", rightMask);
         }
 
     for (int i = 0; i < pixelsRight.size(); ++i) {
-        qDebug() << (double) pixelsRight[i] / totalRight * 100.0 << "%";
+        double percent = (double) pixelsRight[i] / totalRight * 100.0;
+        right.setZonePressure(i, percent);
         }
 
-    // Pixel Count
-    /*if ( std::find(args.begin(), args.end(), "-pc") != args.end() ) {
-        rightImg = source( rightRect ).clone(),
-        leftImg = source( leftRect ).clone();
-
-        ImageProcessing::countPixels(rightImg, ImageProcessing::rightPixelCount);
-        ImageProcessing::countPixels(leftImg, ImageProcessing::leftPixelCount);
-
-        std::ofstream rightFile("rData.txt", std::ios::out | std::ios::app);
-        std::ofstream leftFile("lData.txt", std::ios::out | std::ios::app);
-
-        for (int i = 0; i < ImageProcessing::rightPixelCount.size(); ++i) {
-            rightFile << ImageProcessing::rightPixelCount[i] << std::endl;
-            leftFile << ImageProcessing::leftPixelCount[i] << std::endl;
-            }
-
-        rightFile.close();
-        leftFile.close();
-        }*/
+    std::cout << "{"
+              << "\"original\": \"" << fileName << "\", "
+              << left.toJSON() << ","
+              << right.toJSON()
+              << "}";
 
     return 0;
     }
