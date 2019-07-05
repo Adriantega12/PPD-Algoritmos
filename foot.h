@@ -48,6 +48,8 @@ class Foot {
         std::string getHcRoute() const;
 
         std::string toJSON();
+
+        double pixelsToCm(int pixels);
 };
 
 #endif // FOOT_H

@@ -89,15 +89,24 @@ std::string Foot::toJSON() {
 
     json << "\""
          << (isLeft ? "left" : "right")
-         << "\": {"
-         << "\"original\": \"" << parentRoute
-         << "\", " "\"color\": \"" << colorRoute << "\", "
-         << "\"hernandez-corvo\": \"" << hcRoute << "\", "
-         << "\"x\": " << std::to_string(x) << ", "
-         << "\"y\": " << std::to_string(y) << ", "
-         << "\"ay\": " << std::to_string(ay) << ", "
-         << "\"ta\": " << std::to_string(ta) << ", "
-         << "\"percent\": " << std::to_string(percent) << "}";
+         << "\":{"
+         << "\"original\":\"" << parentRoute
+         << "\"," "\"color\":\"" << colorRoute << "\","
+         << "\"hernandez-corvo\":\"" << hcRoute << "\","
+         << "\"x\":" << std::to_string(Foot::pixelsToCm(x)) << ","
+         << "\"y\":" << std::to_string(Foot::pixelsToCm(y)) << ","
+         << "\"ay\":" << std::to_string(Foot::pixelsToCm(ay)) << ","
+         << "\"ta\":" << std::to_string(Foot::pixelsToCm(ta)) << ","
+         << "\"percent\":" << std::to_string(percent) << ","
+         << "\"z1\":" << std::to_string(zonePressure[0]) << ","
+         << "\"z2\":" << std::to_string(zonePressure[1]) << ","
+         << "\"z3\":" << std::to_string(zonePressure[2]) << ","
+         << "\"z4\":" << std::to_string(zonePressure[3])
+         << "}";
 
     return json.str();
+    }
+
+double Foot::pixelsToCm(int pixels) {
+    return pixels * 24.0 / 285.0;
     }
