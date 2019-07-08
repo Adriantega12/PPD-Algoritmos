@@ -86,6 +86,23 @@ std::string Foot::getHcRoute() const {
 
 std::string Foot::toJSON() {
     std::ostringstream json;
+    std::string type;
+
+    if (percent <= 34.0) {
+        type = "Plano";
+    } else if (percent <= 39.0) {
+        type = "Plano - Normal";
+    } else if (percent <= 54.0) {
+        type = "Normal";
+    } else if (percent <= 59.0) {
+        type = "Normal - Cavo";
+    } else if (percent <= 74) {
+        type = "Cavo";
+    } else if (percent <= 84.0) {
+        type = "Cavo - Fuerte";
+    } else if (percent <= 100.0) {
+        type = "Cavo - Extremo";
+    }
 
     json << "\""
          << (isLeft ? "left" : "right")
@@ -98,6 +115,7 @@ std::string Foot::toJSON() {
          << "\"ay\":" << std::to_string(Foot::pixelsToCm(ay)) << ","
          << "\"ta\":" << std::to_string(Foot::pixelsToCm(ta)) << ","
          << "\"percent\":" << std::to_string(percent) << ","
+         << "\"type\":\"" << type << "\","
          << "\"z1\":" << std::to_string(zonePressure[0]) << ","
          << "\"z2\":" << std::to_string(zonePressure[1]) << ","
          << "\"z3\":" << std::to_string(zonePressure[2]) << ","
